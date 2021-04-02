@@ -26,6 +26,7 @@ class UserSchema(Schema):
     payload = PayloadField(validate=validate.Length(min=0, max=1000))
     fileName = FilenameField(validate=[validate.Length(min=0, max=30), validate.Regexp(r"^[a-zA-Z0-9 '-_.]+$")], required=True)
 
+#Below function is optional and is to show use of preload function
     @pre_load
     def remove_spl_char(self, in_data, **kwargs):
         in_data["name"] = in_data["name"].translate(str.maketrans('', '', "\'- "))
