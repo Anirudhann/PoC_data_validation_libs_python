@@ -2,7 +2,6 @@
 pip install marshmellow==3.11.1
 """
 
-import re
 from marshmallow import Schema, fields, ValidationError, validate, pre_load
 
 class PayloadField(fields.Field):
@@ -12,13 +11,6 @@ class PayloadField(fields.Field):
         else:
             raise ValidationError('Field should be str or dict')
 
-class PostalcodeField(fields.Field):
-    def _deserialize(self, value, attr, data, **kwargs):
-        if re.compile(r"^\d{5}\-\d{4}$|^\d{5}$").search(value):
-            return value
-        else:
-            raise ValidationError('Invalid postalcode')
-
 class FilenameField(fields.Field):
     def _deserialize(self, value, attr, data, **kwargs):
         if value[-3:] == "csv":
@@ -27,12 +19,12 @@ class FilenameField(fields.Field):
             raise ValidationError('Invalid fileName')
 
 class UserSchema(Schema):
-    name = fields.String(validate=validate.Length(min=0, max=30), required=True)
-    role = fields.String(validate=[validate.Length(min=0, max=30), validate.OneOf(['Dev', 'Test', 'Support'])], required=True)
-    referenceId = fields.String(validate=validate.Length(min=0, max=30), required=True)
-    postalcode = PostalcodeField(validate=validate.Length(min=5, max=10), required=True)
+    name = fields.String(validate=[validate.Length(min=0, max=30), validate.Regexp(r"^[a-zA-Z0-9'-]+$")], required=True)
+    role = fields.String(validate=[validate.Length(min=0, max=30), validate.Regexp(r"^[a-zA-Z0-9'-]+$"), validate.OneOf(['Dev', 'Test', 'Support'])], required=True)
+    referenceId = fields.String(validate=[validate.Length(min=0, max=30), validate.Regexp(r"^[a-zA-Z0-9 '-]+$")], required=True)
+    postalcode = fields.String(validate=[validate.Length(min=5, max=10), validate.Regexp(r"^\d{5}\-\d{4}$|^\d{5}$")], required=True)
     payload = PayloadField(validate=validate.Length(min=0, max=1000))
-    fileName = FilenameField(validate=validate.Length(min=0, max=30), required=True)
+    fileName = FilenameField(validate=[validate.Length(min=0, max=30), validate.Regexp(r"^[a-zA-Z0-9 '-_.]+$")], required=True)
 
     @pre_load
     def remove_spl_char(self, in_data, **kwargs):
